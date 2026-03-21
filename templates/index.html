@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM Data Collection Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Google Sans', 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+
+        /* Google Form Container */
+        .form-container {
+            max-width: 768px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        }
+
+        /* Header */
+        .form-header {
+            background: #673ab7;
+            padding: 48px 32px 24px;
+            border-radius: 8px 8px 0 0;
+            color: white;
+        }
+
+        .form-header h1 {
+            font-size: 32px;
+            font-weight: 400;
+            margin-bottom: 8px;
+        }
+
+        .form-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        /* Form Body */
+        .form-body {
+            padding: 32px;
+        }
+
+        /* Question Cards */
+        .question-card {
+            background: white;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .question-card:hover {
+            border-color: #673ab7;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .question-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .required-star {
+            color: #d93025;
+            font-size: 18px;
+        }
+
+        /* Input Fields */
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-bottom: 1px solid #dadce0;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s;
+            background: transparent;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-bottom-color: #673ab7;
+            border-bottom-width: 2px;
+        }
+
+        /* Radio & Checkbox Groups */
+        .options-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .option input[type="radio"],
+        .option input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #673ab7;
+        }
+
+        .option label {
+            cursor: pointer;
+            font-size: 14px;
+            color: #202124;
+        }
+
+        /* DateTime Group */
+        .datetime-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .datetime-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .datetime-field label {
+            font-size: 12px;
+            color: #5f6368;
+        }
+
+        /* File Upload */
+        .upload-area {
+            border: 2px dashed #dadce0;
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: #673ab7;
+            background: #f8f9fa;
+        }
+
+        .upload-area input {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            color: #5f6368;
+            font-size: 14px;
+        }
+
+        .file-list {
+            margin-top: 16px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            background: #f8f9fa;
+            margin-top: 8px;
+            border-radius: 4px;
+        }
+
+        /* Serial Number Info */
+        .serial-info {
+            background: #e8f0fe;
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #1a73e8;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .btn-submit {
+            background: #673ab7;
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-submit:hover {
+            background: #512da8;
+        }
+
+        .btn-clear {
+            background: transparent;
+            color: #673ab7;
+            border: 1px solid #dadce0;
+            padding: 12px 32px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-clear:hover {
+            background: #f8f9fa;
+            border-color: #673ab7;
+        }
+
+        /* Messages */
+        .message {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            animation: slideDown 0.3s ease;
+        }
+
+        .success {
+            background: #e6f4ea;
+            color: #137333;
+            border-left: 4px solid #34a853;
+        }
+
+        .error {
+            background: #fce8e6;
+            color: #c5221f;
+            border-left: 4px solid #ea4335;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Preview Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .modal-content img,
+        .modal-content video {
+            max-width: 100%;
+            max-height: 90vh;
+        }
+
+        @media (max-width: 600px) {
+            .form-body {
+                padding: 16px;
+            }
+            
+            .datetime-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-header">
+            <h1>PM Data Collection Form</h1>
+            <p>PM Data 25-26 - Please fill all required fields</p>
+        </div>
+
+        <div class="form-body">
+            <div id="messageArea"></div>
+
+            <form id="pmForm" enctype="multipart/form-data">
+                <!-- PM Start Date -->
+                <div class="question-card">
+                    <div class="question-title">
+                        PM Start Date & Time <span class="required-star">*</span>
+                    </div>
+                    <div class="datetime-group">
+                        <div class="datetime-field">
+                            <label>Date</label>
+                            <input type="date" name="pm_start_date" class="input-field" required>
+                        </div>
+                        <div class="datetime-field">
+                            <label>Time</label>
+                            <input type="time" name="pm_start_time" class="input-field" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PM End Date -->
+                <div class="question-card">
+                    <div class="question-title">
+                        PM End Date & Time <span class="required-star">*</span>
+                    </div>
+                    <div class="datetime-group">
+                        <div class="datetime-field">
+                            <label>Date</label>
+                            <input type="date" name="pm_end_date" class="input-field" required>
+                        </div>
+                        <div class="datetime-field">
+                            <label>Time</label>
+                            <input type="time" name="pm_end_time" class="input-field" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Name -->
+                <div class="question-card">
+                    <div class="question-title">
+                        Customer Name <span class="required-star">*</span>
+                    </div>
+                    <div class="options-group" id="customerGroup">
+                        <label class="option">
+                            <input type="radio" name="customer" value="ABRAMI PRECISION WORK" required> 
+                            <span>ABRAMI PRECISION WORK</span>
+                        </label>
+                        <label class="option">
+                            <input type="radio" name="customer" value="ASWINI ENTREPRISES"> 
+                            <span>ASWINI ENTREPRISES</span>
+                        </label>
+                        <label class="option">
+                            <input type="radio" name="customer" value="AURO INDUSTRIES"> 
+                            <span>AURO INDUSTRIES</span>
+                        </label>
+                        <label class="option">
+                            <input type="radio" name="customer" value="EAZHIL ENGINEERING"> 
+                            <span>EAZHIL ENGINEERING</span>
+                        </label>
+                        <label class="option">
+                            <input type="radio" name="customer" value="ROYAL ENFIELD"> 
+                            <span>ROYAL ENFIELD</span>
+                        </label>
+                        <label class="option">
+                            <input type="radio" name="customer" value="other"> 
+                            <span>Other:</span>
+                            <input type="text" name="customer_other" class="input-field" style="width: auto; flex: 1;" placeholder="Enter customer name">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Machine TYPE -->
+                <div class="question-card">
+                    <div class="question-title">
+                        Machine TYPE <span class="required-star">*</span>
+                    </div>
+                    <div class="options-group" id="machineTypeGroup">
+                        <label class="option">
+                            <input type="radio" name="machine_type" value="ACE" required> 
+                            <span>ACE</span>
+                        </label>
+                        <label class="option">
+                            <input type="radio" name="machine_type" value="AMS"> 
+                            <span>AMS</span>
+                        </label>
+                        <label class="option">
+                            <input type="radio" name="machine_type" value="MGT"> 
+                            <span>MGT</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Machine Model (Dynamic based on Machine Type) -->
+                <div class="question-card" id="machineModelCard">
+                    <div class="question-title">
+                        Machine Model <span class="required-star">*</span>
+                    </div>
+                    <div class="options-group" id="machineModelGroup">
+                        <!-- Models will be populated dynamically -->
+                    </div>
+                    <div class="option" style="margin-top: 12px;">
+                        <label class="option">
+                            <input type="radio" name="machine_model" value="other_model"> 
+                            <span>Other:</span>
+                            <input type="text" id="otherModelText" class="input-field" style="width: auto; flex: 1;" placeholder="Enter machine model" disabled>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Machine Serial Number with Auto-suggestion -->
+                <div class="question-card">
+                    <div class="question-title">
+                        Machine Serial Number <span class="required-star">*</span>
+                    </div>
+                    <input type="text" name="machine_serial" id="machineSerial" class="input-field" placeholder="Enter or select from suggestions" required>
+                    <div id="serialSuggestions" class="serial-info" style="display: none;"></div>
+                </div>
+
+                <!-- Controller -->
+                <div class="question-card">
+                    <div class="question-title">
+                        Controller Type <span class="required-star">*</span>
+                    </div>
+                    <div class="options-group">
+                        <label class="option">
+                            <input type="checkbox" name="controller" value="Fanuc"> 
+                            <span>Fanuc</span>
+                        </label>
+                        <label class="option">
+                            <input type="checkbox" name="controller" value="Siemens"> 
+                            <span>Siemens</span>
+                        </label>
+                        <label class="option">
+                            <input type="checkbox" name="controller" value="PLC"> 
+                            <span>PLC</span>
+                        </label>
+                        <label class="option">
+                            <input type="checkbox" name="controller" value="Mitsubishi"> 
+                            <span>Mitsubishi</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Abnormalities -->
+                <div class="question-card">
+                    <div class="question-title">
+                        PM Abnormalities Corrected <span class="required-star">*</span>
+                    </div>
+                    <textarea name="abnormalities" class="input-field" rows="3" placeholder="Describe any abnormalities corrected" required></textarea>
+                </div>
+
+                <!-- First Engineer -->
+                <div class="question-card">
+                    <div class="question-title">
+                        First Engineer Name <span class="required-star">*</span>
+                    </div>
+                    <select name="first_engineer" class="input-field" required>
+                        <option value="">Select engineer</option>
+                        <option value="Chellamani.S">Chellamani.S</option>
+                        <option value="Srinivasan J">Srinivasan J</option>
+                        <option value="Dinesh T">Dinesh T</option>
+                        <option value="Suresh C">Suresh C</option>
+                    </select>
+                </div>
+
+                <!-- Report No -->
+                <div class="question-card">
+                    <div class="question-title">
+                        Report Number <span class="required-star">*</span>
+                    </div>
+                    <input type="text" name="report_no" class="input-field" placeholder="Enter report number" required>
+                </div>
+
+                <!-- Backup Status -->
+                <div class="question-card">
+                    <div class="question-title">
+                        Machine Backup Status <span class="required-star">*</span>
+                    </div>
+                    <div class="options-group">
+                        <label class="option">
+                            <input type="radio" name="backup_status" value="Taken" required> 
+                            <span>Taken</span>
+                        </label>
+                        <label class="option">
+                            <input type="radio" name="backup_status" value="Partial Taken"> 
+                            <span>Partial Taken</span>
+                        </label>
+                        <label class="option">
+                            <input type="radio" name="backup_status" value="Card Not Available"> 
+                            <span>Card Not Available</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Photo Upload -->
+                <div class="question-card">
+                    <div class="question-title">
+                        Upload Photos (Optional)
+                    </div>
+                    <div class="upload-area" onclick="document.getElementById('photoInput').click()">
+                        <div class="upload-icon">📸</div>
+                        <div class="upload-text">Click to upload photos</div>
+                        <div class="upload-text" style="font-size: 12px;">JPG, PNG, GIF (Max 10MB each)</div>
+                        <input type="file" id="photoInput" name="photos" accept="image/*" multiple>
+                    </div>
+                    <div id="photoList" class="file-list"></div>
+                </div>
+
+                <!-- Video Upload -->
+                <div class="question-card">
+                    <div class="question-title">
+                        Upload Videos (Optional)
+                    </div>
+                    <div class="upload-area" onclick="document.getElementById('videoInput').click()">
+                        <div class="upload-icon">🎥</div>
+                        <div class="upload-text">Click to upload videos</div>
+                        <div class="upload-text" style="font-size: 12px;">MP4, MOV, AVI (Max 50MB each)</div>
+                        <input type="file" id="videoInput" name="videos" accept="video/*" multiple>
+                    </div>
+                    <div id="videoList" class="file-list"></div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="button-group">
+                    <button type="submit" class="btn-submit">Submit Form</button>
+                    <button type="button" class="btn-clear" onclick="clearForm()">Clear Form</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="modal" onclick="closeModal()">
+        <div class="modal-content" id="modalContent"></div>
+    </div>
+
+    <script>
+        // Machine models based on machine type
+        const machineModelsByType = {
+            'ACE': ['Jobber XL', 'Jobber LM', 'CUB', 'Jobber Journey'],
+            'AMS': ['DTC-400', 'DTC-400 XL', 'DTC-400 LXL', 'DART'],
+            'MGT': ['MGT-100', 'MGT-200', 'MGT-300', 'MGT-400']
+        };
+
+        // Machine serial numbers database based on model
+        const serialDatabase = {
+            'Jobber XL': ['519', '234', '98634', 'JXL-004', 'JXL-005'],
+            'Jobber LM': ['JLM-001', 'JLM-002', 'JLM-003', 'JLM-004', 'JLM-005'],
+            'CUB': ['CUB-001', 'CUB-002', 'CUB-003', 'CUB-004', 'CUB-005'],
+            'Jobber Journey': ['JJ-001', 'JJ-002', 'JJ-003', 'JJ-004', 'JJ-005'],
+            'DTC-400': ['DTC400-001', 'DTC400-002', 'DTC400-003', 'DTC400-004', 'DTC400-005'],
+            'DTC-400 XL': ['DTC400XL-001', 'DTC400XL-002', 'DTC400XL-003', 'DTC400XL-004', 'DTC400XL-005'],
+            'DTC-400 LXL': ['DTC400LXL-001', 'DTC400LXL-002', 'DTC400LXL-003', 'DTC400LXL-004', 'DTC400LXL-005'],
+            'DART': ['DART-001', 'DART-002', 'DART-003', 'DART-004', 'DART-005'],
+            'MGT-100': ['MGT100-001', 'MGT100-002', 'MGT100-003', 'MGT100-004', 'MGT100-005'],
+            'MGT-200': ['MGT200-001', 'MGT200-002', 'MGT200-003', 'MGT200-004', 'MGT200-005'],
+            'MGT-300': ['MGT300-001', 'MGT300-002', 'MGT300-003', 'MGT300-004', 'MGT300-005'],
+            'MGT-400': ['MGT400-001', 'MGT400-002', 'MGT400-003', 'MGT400-004', 'MGT400-005']
+        };
+
+        let currentModels = [];
+
+        // Function to update machine models based on selected type
+        function updateMachineModels(machineType) {
+            const modelGroup = document.getElementById('machineModelGroup');
+            const otherModelText = document.getElementById('otherModelText');
+            
+            if (!modelGroup) return;
+            
+            // Clear existing models
+            modelGroup.innerHTML = '';
+            
+            if (machineType && machineModelsByType[machineType]) {
+                currentModels = machineModelsByType[machineType];
+                
+                // Add radio buttons for each model
+                currentModels.forEach(model => {
+                    const modelDiv = document.createElement('div');
+                    modelDiv.className = 'option';
+                    modelDiv.innerHTML = `
+                        <input type="radio" name="machine_model" value="${model}" required>
+                        <span>${model}</span>
+                    `;
+                    modelGroup.appendChild(modelDiv);
+                });
+                
+                // Enable other option
+                otherModelText.disabled = false;
+                
+                // Add event listeners to new radio buttons for serial suggestions
+                document.querySelectorAll('input[name="machine_model"]').forEach(radio => {
+                    radio.removeEventListener('change', handleModelChange);
+                    radio.addEventListener('change', handleModelChange);
+                });
+            }
+        }
+        
+        // Handle model change for serial suggestions
+        function handleModelChange(e) {
+            const selectedModel = e.target.value;
+            const serialInput = document.getElementById('machineSerial');
+            const suggestionsDiv = document.getElementById('serialSuggestions');
+            
+            if (selectedModel && serialDatabase[selectedModel]) {
+                suggestionsDiv.style.display = 'block';
+                suggestionsDiv.innerHTML = '<strong>Suggested serial numbers:</strong><br>' + 
+                    serialDatabase[selectedModel].map(s => 
+                        `<span style="cursor: pointer; display: inline-block; margin: 5px 10px 5px 0; padding: 4px 8px; background: #e8f0fe; border-radius: 4px;" onclick="document.getElementById('machineSerial').value='${s}'">${s}</span>`
+                    ).join('');
+            } else {
+                suggestionsDiv.style.display = 'none';
+            }
+        }
+        
+        // Handle "Other" model selection
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.name === 'machine_model' && e.target.value === 'other_model') {
+                const otherText = document.getElementById('otherModelText');
+                otherText.disabled = false;
+                otherText.focus();
+                
+                // Clear serial suggestions
+                document.getElementById('serialSuggestions').style.display = 'none';
+            }
+        });
+        
+        // Handle custom model input
+        document.getElementById('otherModelText')?.addEventListener('input', function(e) {
+            if (this.value) {
+                // Update the radio value to custom input
+                const otherRadio = document.querySelector('input[name="machine_model"][value="other_model"]');
+                if (otherRadio && otherRadio.checked) {
+                    // Store custom model value for submission
+                    this.setAttribute('data-custom-value', this.value);
+                }
+            }
+        });
+        
+        // Listen for machine type selection
+        document.querySelectorAll('input[name="machine_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.checked) {
+                    updateMachineModels(this.value);
+                    // Clear machine serial when type changes
+                    document.getElementById('machineSerial').value = '';
+                    document.getElementById('serialSuggestions').style.display = 'none';
+                }
+            });
+        });
+
+        // File upload handling
+        let photos = [];
+        let videos = [];
+
+        document.getElementById('photoInput').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            photos = [...photos, ...files];
+            updateFileList('photoList', photos, 'photo');
+        });
+
+        document.getElementById('videoInput').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            videos = [...videos, ...files];
+            updateFileList('videoList', videos, 'video');
+        });
+
+        function updateFileList(containerId, files, type) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            files.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                const url = URL.createObjectURL(file);
+                const isImage = file.type.startsWith('image/');
+                
+                fileItem.innerHTML = `
+                    <span style="display: flex; align-items: center; gap: 10px;">
+                        ${isImage ? `<img src="${url}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; cursor: pointer;" onclick="previewFile('${url}', '${file.type}')">` : '📹'}
+                        <span>${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    </span>
+                    <button type="button" onclick="removeFile('${type}', ${index})" style="background: none; border: none; color: #d93025; cursor: pointer;">✖</button>
+                `;
+                container.appendChild(fileItem);
+            });
+        }
+
+        function removeFile(type, index) {
+            if (type === 'photo') {
+                photos.splice(index, 1);
+                updateFileList('photoList', photos, 'photo');
+                document.getElementById('photoInput').value = '';
+            } else {
+                videos.splice(index, 1);
+                updateFileList('videoList', videos, 'video');
+                document.getElementById('videoInput').value = '';
+            }
+        }
+
+        function previewFile(url, type) {
+            const modal = document.getElementById('previewModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            if (type.startsWith('image/')) {
+                modalContent.innerHTML = `<img src="${url}" alt="Preview">`;
+            } else {
+                modalContent.innerHTML = `<video controls src="${url}"></video>`;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('previewModal').style.display = 'none';
+        }
+
+        // Form submission
+        document.getElementById('pmForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            // Handle machine model - if "other" is selected, use custom value
+            const selectedModelRadio = document.querySelector('input[name="machine_model"]:checked');
+            if (selectedModelRadio && selectedModelRadio.value === 'other_model') {
+                const otherModelText = document.getElementById('otherModelText');
+                if (otherModelText.value) {
+                    formData.set('machine_model', otherModelText.value);
+                }
+            }
+            
+            // Add photos and videos
+            photos.forEach(photo => {
+                formData.append('photos', photo);
+            });
+            
+            videos.forEach(video => {
+                formData.append('videos', video);
+            });
+            
+            // Handle other customer
+            const customerRadio = document.querySelector('input[name="customer"]:checked');
+            if (customerRadio && customerRadio.value === 'other') {
+                const otherValue = document.querySelector('input[name="customer_other"]').value;
+                if (otherValue) {
+                    formData.set('customer', otherValue);
+                }
+            }
+            
+            // Handle controllers
+            const controllers = Array.from(document.querySelectorAll('input[name="controller"]:checked'))
+                .map(cb => cb.value);
+            formData.set('controller', controllers.join(', '));
+            
+            try {
+                const response = await fetch('/submit', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('success', result.message);
+                    clearForm();
+                } else {
+                    showMessage('error', result.message);
+                }
+            } catch (error) {
+                showMessage('error', 'Error submitting form. Please try again.');
+            }
+        });
+        
+        function clearForm() {
+            document.getElementById('pmForm').reset();
+            photos = [];
+            videos = [];
+            document.getElementById('photoList').innerHTML = '';
+            document.getElementById('videoList').innerHTML = '';
+            document.getElementById('serialSuggestions').style.display = 'none';
+            document.getElementById('machineModelGroup').innerHTML = '';
+            document.getElementById('otherModelText').disabled = true;
+        }
+        
+        function showMessage(type, text) {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+        
+        // Generate report number automatically
+        function generateReportNumber() {
+            const date = new Date();
+            const year = date.getFullYear().toString().slice(-2);
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            return `PM${year}${month}${day}-${random}`;
+        }
+        
+        // Auto-fill report number on page load
+        document.querySelector('input[name="report_no"]').value = generateReportNumber();
+        
+        // Initialize with default selection (optional)
+        // If you want ACE to be selected by default, uncomment below:
+        // document.querySelector('input[name="machine_type"][value="ACE"]').checked = true;
+        // updateMachineModels('ACE');
+    </script>
+</body>
+</html>
