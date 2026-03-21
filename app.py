@@ -1,29 +1,42 @@
 from flask import Flask, request, render_template, jsonify
 import os
+import json
 from datetime import datetime
-import uuid
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
-app.config['UPLOAD_FOLDER'] = 'uploads'
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# Google Sheets Setup
+# Google Sheets Setup Scope
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-# 'credentials.json' கோப்பு உங்கள் மெயின் ஃபோல்டரில் இருக்க வேண்டும்
-creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
-client = gspread.authorize(creds)
-# உங்கள் Google Sheet பெயரைக் கீழே கொடுக்கவும்
-sheet = client.open("PM_Data_Collection").sheet1 
 
-ALLOWED_IMAGES = {'png', 'jpg', 'jpeg', 'gif'}
-ALLOWED_VIDEOS = {'mp4', 'mov', 'avi'}
+def get_gspread_client():
+    # Render Environment Variable-ல் இருந்து JSON-ஐ எடுக்கிறது
+    creds_json = os.environ.get('GOOGLE_CREDS_JSON')
+    
+    if creds_json:
+        # String-ஆக இருக்கும் தகவலை Dictionary-ஆக மாற்றுகிறது
+        info = json.loads(creds_json)
+        # Private Key-ல் உள்ள '\n' பிரச்சனையைச் சரிசெய்கிறது (இதுதான் முக்கியம்)
+        if 'private_key' in info:
+            info['private_key'] = info['private_key'].replace('\\n', '\n')
+        return ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
+    else:
+        # Local-ல் உங்கள் கணினியில் செக் செய்ய (credentials.json கோப்பு இருந்தால்)
+        try:
+            return ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+        except Exception:
+            return None
 
-def allowed_file(filename, allowed_set):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_set
+# Auth Setup
+creds = get_gspread_client()
+if creds:
+    client = gspread.authorize(creds)
+    # உங்கள் Google Sheet பெயர் சரியாக இருப்பதை உறுதி செய்யவும்
+    sheet = client.open("PM_Data_Collection").sheet1 
+else:
+    print("Error: Google Credentials not found!")
 
 @app.route('/')
 def form():
@@ -32,7 +45,6 @@ def form():
 @app.route('/submit', methods=['POST'])
 def submit():
     try:
-        # Form Data சேகரிப்பு
         data = [
             request.form.get('report_no'),
             f"{request.form.get('pm_start_date')} {request.form.get('pm_start_time')}",
@@ -48,9 +60,7 @@ def submit():
             datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         ]
 
-        # Google Sheet-ல் தரவைச் சேர்த்தல்
         sheet.append_row(data)
-        
         return jsonify({'success': True, 'message': 'Data saved to Google Sheets successfully!'})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
