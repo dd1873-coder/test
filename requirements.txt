@@ -1,3 +1,5 @@
 flask
-openpyxl
+gspread
+oauth2client
+gunicorn
 werkzeug
