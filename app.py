@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, jsonify
 import os
 import json
+import base64
 from datetime import datetime
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
@@ -12,18 +13,20 @@ app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
 def get_gspread_client():
-    # Render Environment Variable-ல் இருந்து JSON-ஐ எடுக்கிறது
-    creds_json = os.environ.get('GOOGLE_CREDS_JSON')
+    # Render-ல் இருந்து Base64 குறியீட்டை எடுக்கிறது
+    base64_creds = os.environ.get('GOOGLE_CREDS_JSON')
     
-    if creds_json:
-        # String-ஆக இருக்கும் தகவலை Dictionary-ஆக மாற்றுகிறது
-        info = json.loads(creds_json)
-        # Private Key-ல் உள்ள '\n' பிரச்சனையைச் சரிசெய்கிறது (இதுதான் முக்கியம்)
-        if 'private_key' in info:
-            info['private_key'] = info['private_key'].replace('\\n', '\n')
-        return ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
+    if base64_creds:
+        try:
+            # Base64-ஐ மீண்டும் அசல் JSON-ஆக மாற்றுகிறது
+            decoded_creds = base64.b64decode(base64_creds).decode('utf-8')
+            info = json.loads(decoded_creds)
+            return ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
+        except Exception as e:
+            print(f"Auth Error: {e}")
+            return None
     else:
-        # Local-ல் உங்கள் கணினியில் செக் செய்ய (credentials.json கோப்பு இருந்தால்)
+        # Local testing (கணினியில் credentials.json இருந்தால்)
         try:
             return ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
         except Exception:
@@ -36,7 +39,7 @@ if creds:
     # உங்கள் Google Sheet பெயர் சரியாக இருப்பதை உறுதி செய்யவும்
     sheet = client.open("PM_Data_Collection").sheet1 
 else:
-    print("Error: Google Credentials not found!")
+    print("Error: Google Credentials not found or invalid!")
 
 @app.route('/')
 def form():
