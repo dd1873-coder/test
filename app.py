@@ -1,57 +1,24 @@
 from flask import Flask, request, render_template, jsonify
+import openpyxl
+from openpyxl import load_workbook
 import os
-import json
-import base64
 from datetime import datetime
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+import uuid
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max file size
+app.config['UPLOAD_FOLDER'] = 'uploads'
 
-# உலகளாவிய வேரியபிளாக அறிவிக்கவும்
-sheet = None
+# Create upload folder if it doesn't exist
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-def get_gspread_client():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    # Render-ல் உள்ள Base64 குறியீட்டை எடுக்கிறது
-    base64_creds = os.environ.get('GOOGLE_CREDS_JSON')
-    
-    if base64_creds:
-        try:
-            # Base64-ஐ மீண்டும் அசல் JSON-ஆக மாற்றுகிறது
-            decoded_creds = base64.b64decode(base64_creds).decode('utf-8')
-            info = json.loads(decoded_creds)
-            return ServiceAccountCredentials.from_json_keyfile_dict(info, scope)
-        except Exception as e:
-            print(f"Auth Error: {e}")
-            return None
-    else:
-        # Local testing (கணினியில் credentials.json இருந்தால்)
-        try:
-            return ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
-        except Exception as e:
-            print(f"Local Auth Error: {e}")
-            return None
+# Allowed extensions
+ALLOWED_IMAGES = {'png', 'jpg', 'jpeg', 'gif', 'bmp'}
+ALLOWED_VIDEOS = {'mp4', 'mov', 'avi', 'mkv', 'webm'}
 
-def initialize_sheet():
-    global sheet
-    try:
-        creds = get_gspread_client()
-        if creds:
-            client = gspread.authorize(creds)
-            # உங்கள் Google Sheet பெயர் சரியாக இருப்பதை உறுதி செய்யவும்
-            # 'PM_Data_Collection' என்பது உங்கள் Sheet-ன் பெயராக இருக்க வேண்டும்
-            sheet = client.open("PM Data_2026-2027").sheet1
-            print("Connected to Google Sheets successfully!")
-        else:
-            print("Credentials not found!")
-    except Exception as e:
-        print(f"Initialization Error: {e}")
-        sheet = None
-
-# ஆப் தொடங்கும்போதே ஒருமுறை இயக்கவும்
-initialize_sheet()
+def allowed_file(filename, allowed_set):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_set
 
 @app.route('/')
 def form():
@@ -59,38 +26,109 @@ def form():
 
 @app.route('/submit', methods=['POST'])
 def submit():
-    global sheet
-    
-    # ஒருவேளை ஷீட் கனெக்ட் ஆகவில்லை என்றால் மீண்டும் ஒருமுறை முயற்சிக்கும்
-    if sheet is None:
-        initialize_sheet()
-        if sheet is None:
-            return jsonify({'success': False, 'message': 'Database connection failed! Check logs.'})
-
     try:
-        # Form-ல் இருந்து தகவல்களை எடுத்தல்
-        data = [
-            request.form.get('report_no', ''),
-            f"{request.form.get('pm_start_date', '')} {request.form.get('pm_start_time', '')}",
-            f"{request.form.get('pm_end_date', '')} {request.form.get('pm_end_time', '')}",
-            request.form.get('customer') or request.form.get('customer_other', ''),
-            request.form.get('machine_type', ''),
-            request.form.get('machine_model', ''),
-            request.form.get('machine_serial', ''),
-            request.form.get('controller', ''),
-            request.form.get('abnormalities', ''),
-            request.form.get('first_engineer', ''),
-            request.form.get('backup_status', ''),
+        # Collect all form data
+        pm_start_date = request.form.get('pm_start_date', '')
+        pm_start_time = request.form.get('pm_start_time', '')
+        pm_end_date = request.form.get('pm_end_date', '')
+        pm_end_time = request.form.get('pm_end_time', '')
+        
+        # Handle customer name
+        customer = request.form.get('customer', '')
+        if not customer:
+            customer = request.form.get('customer_other', '')
+        
+        machine_type = request.form.get('machine_type', '')
+        machine_model = request.form.get('machine_model', '')
+        machine_serial = request.form.get('machine_serial', '')
+        controller = request.form.get('controller', '')
+        abnormalities = request.form.get('abnormalities', '')
+        first_engineer = request.form.get('first_engineer', '')
+        report_no = request.form.get('report_no', '')
+        backup_status = request.form.get('backup_status', '')
+
+        # Validate required fields
+        required_fields = [pm_start_date, pm_start_time, pm_end_date, pm_end_time, 
+                          customer, machine_type, machine_model, machine_serial, abnormalities, 
+                          first_engineer, report_no, backup_status]
+        
+        if not all(required_fields):
+            return jsonify({'success': False, 'message': 'Please fill all required fields!'})
+
+        # Handle file uploads
+        uploaded_files = []
+        
+        # Save photos
+        photos = request.files.getlist('photos')
+        for photo in photos:
+            if photo and allowed_file(photo.filename, ALLOWED_IMAGES):
+                filename = f"{uuid.uuid4().hex}_{secure_filename(photo.filename)}"
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                photo.save(filepath)
+                uploaded_files.append({'type': 'photo', 'filename': filename, 'path': filepath})
+        
+        # Save videos
+        videos = request.files.getlist('videos')
+        for video in videos:
+            if video and allowed_file(video.filename, ALLOWED_VIDEOS):
+                filename = f"{uuid.uuid4().hex}_{secure_filename(video.filename)}"
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                video.save(filepath)
+                uploaded_files.append({'type': 'video', 'filename': filename, 'path': filepath})
+
+        # Combine date and time
+        pm_start = f"{pm_start_date} {pm_start_time}" if pm_start_date and pm_start_time else ''
+        pm_end = f"{pm_end_date} {pm_end_time}" if pm_end_date and pm_end_time else ''
+
+        # Excel file operations
+        file = "pm_data.xlsx"
+        
+        if os.path.exists(file):
+            wb = load_workbook(file)
+            sheet = wb.active
+        else:
+            wb = openpyxl.Workbook()
+            sheet = wb.active
+        
+        # Add headers if empty
+        if sheet.max_row == 1 and sheet.cell(1, 1).value is None:
+            headers = [
+                'Report No', 'PM Start', 'PM End', 'Customer', 'Machine Type' 
+                'Machine Model', 'Machine Serial', 'Controller', 
+                'Abnormalities Corrected', 'First Engineer', 'Backup Status',
+                'Uploaded Files', 'Submission Date'
+            ]
+            sheet.append(headers)
+        
+        # Prepare file list string
+        file_list = ', '.join([f"{f['type']}: {f['filename']}" for f in uploaded_files]) if uploaded_files else ''
+        
+        # Append data
+        row_data = [
+            pm_start,
+            pm_end,
+            customer,
+            machine_type,
+            machine_model,
+            machine_serial,
+            controller,
+            abnormalities,
+            first_engineer,
+            report_no,
+            backup_status,
+            file_list,
             datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         ]
-
-        sheet.append_row(data)
-        return jsonify({'success': True, 'message': 'Data saved to Google Sheets successfully!'})
+        
+        sheet.append(row_data)
+        wb.save(file)
+        wb.close()
+        
+        return jsonify({'success': True, 'message': 'Data saved successfully with files!'})
+    
     except Exception as e:
-        print(f"Submit Error: {e}")
-        return jsonify({'success': False, 'message': f'Error: {str(e)}'})
+        print(f"Error saving data: {str(e)}")
+        return jsonify({'success': False, 'message': f'Error saving data: {str(e)}'})
 
 if __name__ == "__main__":
-    # Render-ல் போர்ட் தானாக அமையும், லோக்கலில் 5000-ல் இயங்கும்
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True, host='0.0.0.0', port=5000)
